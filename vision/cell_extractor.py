@@ -1,27 +1,14 @@
 class CellExtractor:
 
-	def extract(self, board_image):
-		height, width = board_image.shape[:2]
+    def extract(self, board_image, size=6):
+        """Cuts the board image into size x size cells, as cells[row][col]."""
+        height, width = board_image.shape[:2]
 
-		cell_width = width // 6
-		cell_height = height // 6
+        # Round each border from the exact position, so the error never builds up.
+        xs = [round(col * width / size) for col in range(size + 1)]
+        ys = [round(row * height / size) for row in range(size + 1)]
 
-		cells = []
-
-		for row in range(6):
-			cell_row = []
-
-			for col in range(6):
-				x1 = col * cell_width
-				y1 = row * cell_height
-
-				x2 = x1 + cell_width
-				y2 = y1 + cell_height
-
-				cell = board_image[y1:y2, x1:x2]
-
-				cell_row.append(cell)
-
-			cells.append(cell_row)
-
-		return cells
+        return [
+            [board_image[ys[row]:ys[row + 1], xs[col]:xs[col + 1]] for col in range(size)]
+            for row in range(size)
+        ]

@@ -1,10 +1,6 @@
 from tango.board import Board
-from tango.enums import Symbol
 
-from vision.symbol_detector import (
-    SymbolDetector,
-    CellContent
-)
+from vision.symbol_detector import SymbolDetector
 
 
 class BoardBuilder:
@@ -15,24 +11,8 @@ class BoardBuilder:
     def build(self, cells):
         board = Board()
 
-        for row in range(6):
-            for col in range(6):
-                content = self.symbol_detector.detect(
-                    cells[row][col]
-                )
-
-                if content == CellContent.SUN:
-                    board.set_cell(
-                        row,
-                        col,
-                        Symbol.SUN
-                    )
-
-                elif content == CellContent.MOON:
-                    board.set_cell(
-                        row,
-                        col,
-                        Symbol.MOON
-                    )
+        for row in range(board.size):
+            for col in range(board.size):
+                board.set_cell(row, col, self.symbol_detector.detect(cells[row][col]))
 
         return board

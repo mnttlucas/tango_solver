@@ -29,3 +29,30 @@ class Solver:
 				if board.get_cell(row, col) == Symbol.EMPTY:
 					return (row, col)
 		return None
+
+	def count_solutions(self, board, limit = 2):
+		"""Counts solutions, stopping at `limit`. The board is left unchanged.
+
+		A real Tango puzzle has exactly one solution, so more than one means
+		the board was probably misread (a missed constraint, for instance).
+		"""
+		cell = self.find_empty_cell(board)
+
+		if cell is None:
+			return 1 if board.is_solved() else 0
+
+		row, col = cell
+		total = 0
+
+		for symbol in (Symbol.SUN, Symbol.MOON):
+			board.set_cell(row, col, symbol)
+
+			if board.is_valid():
+				total += self.count_solutions(board, limit - total)
+
+				if total >= limit:
+					break
+
+		board.set_cell(row, col, Symbol.EMPTY)
+
+		return total
