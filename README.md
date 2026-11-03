@@ -23,7 +23,12 @@ pip install -r requirements.txt
 python play.py                    # find the board, solve, click
 python play.py --dry-run          # same, without clicking (see debug/annotated.png)
 python play.py --image shot.png   # work on a saved screenshot, no clicks
+python play.py --fast --no-verify # fastest possible, e.g. for a screen recording
 ```
+
+`--fast` removes the mouse travel time and waits 1 ms between clicks, and
+`--no-verify` skips the final re-read of the board. Both are faster but a
+missed click is then neither prevented nor fixed.
 
 Start from a fresh puzzle (press Clear if you already filled cells by hand),
 keep the game fully visible, and run the script: it waits 3 seconds
@@ -47,5 +52,13 @@ Run the tests with `python -m pytest` (or `python -m unittest`).
 
 - Windows, macOS (Retina included) and Linux/X11 are handled. Wayland is not.
   macOS asks for Screen Recording and Accessibility permissions.
-- `assets/templates/` and `vision/extract_templates.py` are no longer used:
-  symbols are detected by color instead of template matching.
+- Symbols are detected by color, not by template matching, so the code does not
+  depend on the size of the game on screen.
+
+## Disclaimer
+
+This is a recreational / educational project about computer vision and
+constraint solving. Tango has daily rankings: do not use this script to post
+scores or to compete against other players. Using automation on a website may
+also go against its terms of service, so use it at your own risk and on
+your own account only.

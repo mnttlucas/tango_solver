@@ -55,16 +55,17 @@ def grab(monitor=None):
             yield Capture(image, info["left"], info["top"], scale)
 
 
-def click(x, y, times=1, interval=0.001):
-    """Moves the mouse there and clicks `times` times, one click at a time.
+def click(x, y, times=1, interval=0.15, move_duration=0.05):
+    """Moves the mouse there and clicks `times` times, `interval` seconds apart.
 
-    Clicks are spaced out so the page never sees a double-click. Moving the
-    mouse into a screen corner aborts the script (pyautogui's fail-safe).
+    Spacing the clicks out keeps the page from seeing a double-click; a very
+    small interval is faster but riskier. Moving the mouse into a screen
+    corner aborts the script (pyautogui's fail-safe).
     """
     import pyautogui
 
-    pyautogui.moveTo(x, y)
+    pyautogui.moveTo(x, y, duration=move_duration)
 
     for _ in range(times):
         pyautogui.click()
-        #--time.sleep(interval)
+        time.sleep(interval)

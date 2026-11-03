@@ -46,6 +46,8 @@ class FakeGame:
         self.state = [[Symbol.EMPTY] * 6 for _ in range(6)]
         self.ignore_clicks = ignore_clicks
         self.clicks = []
+        self.settings = []
+        self.grabs = 0
 
         for row, col in LOCKED:
             self.state[row][col] = base_reading.board.get_cell(row, col)
@@ -82,9 +84,12 @@ class FakeGame:
         return Capture(image, LEFT, TOP, SCALE)
 
     def grab(self, monitor=None):
+        self.grabs += 1
         yield self.capture()
 
-    def click(self, x, y, times=1, interval=0.15):
+    def click(self, x, y, times=1, interval=0.15, move_duration=0.05):
+        self.settings.append((interval, move_duration))
+
         # Back from mouse units to image pixels, then to a cell.
         px = (x - LEFT) * SCALE
         py = (y - TOP) * SCALE
@@ -136,6 +141,39 @@ class TestPlaySimulation(unittest.TestCase):
 
         clicked = {(row, col) for row, col, _ in game.clicks}
         self.assertFalse(clicked & LOCKED)
+
+    def test_fast_mode_skips_mouse_travel_and_waits_almost_nothing(self):
+        game = FakeGame()
+        self.run_play(game, "--fast")
+
+        self.assertTrue(game.settings)
+        self.assertEqual(set(game.settings), {(0.001, 0)})
+
+    def test_default_mode_spaces_clicks_out(self):
+        game = FakeGame()
+        self.run_play(game)
+
+        self.assertEqual(set(game.settings), {(0.15, 0.05)})
+
+    def test_no_verify_reads_the_screen_only_once(self):
+        game = FakeGame()
+        self.run_play(game, "--no-verify")
+
+        self.assertEqual(game.grabs, 1)
+
+    def test_no_verify_leaves_missed_clicks_unfixed(self):
+        game = FakeGame(ignore_clicks=3)
+        self.run_play(game, "--no-verify")
+
+        solution = expected_solution()
+        wrong = [
+            (row, col)
+            for row in range(6)
+            for col in range(6)
+            if game.state[row][col] != solution.get_cell(row, col)
+        ]
+
+        self.assertTrue(wrong)
 
     def test_dry_run_does_not_click(self):
         game = FakeGame()

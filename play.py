@@ -3,6 +3,7 @@
     python play.py                    play on the live screen
     python play.py --dry-run          only analyse and save an annotated image
     python play.py --image shot.png   analyse a saved screenshot (no clicks)
+    python play.py --fast --no-verify as fast as possible, e.g. for a screen recording
 """
 import argparse
 import copy
@@ -29,6 +30,11 @@ def parse_args(argv=None):
     parser.add_argument("--monitor", type=int, help="monitor number to look at (default: all of them)")
     parser.add_argument("--click-interval", type=float, default=0.15,
                         help="seconds between two clicks (default: 0.15)")
+    parser.add_argument("--fast", action="store_true",
+                        help="no mouse travel time and 1 ms between clicks "
+                             "(overrides --click-interval); some clicks may be missed")
+    parser.add_argument("--no-verify", action="store_true",
+                        help="do not read the board back after clicking, so missed clicks are not fixed")
     parser.add_argument("--retries", type=int, default=2,
                         help="extra passes if the board is not right after clicking (default: 2)")
     parser.add_argument("--debug-dir", default="debug",
@@ -66,10 +72,16 @@ def save_debug(args, capture, reading, solution, plan):
     print(f"Saved {raw} and {annotated}")
 
 
-def click_plan(capture, geometry, plan, interval):
+FAST_INTERVAL = 0.001
+
+
+def click_plan(args, capture, geometry, plan):
+    interval = FAST_INTERVAL if args.fast else args.click_interval
+    move_duration = 0 if args.fast else 0.05
+
     for row, col, clicks in plan:
         x, y = capture.to_screen(*geometry.cell_center(row, col))
-        screen.click(x, y, clicks, interval)
+        screen.click(x, y, clicks, interval, move_duration)
 
 
 def verify_and_fix(args, reader, solution):
@@ -95,7 +107,7 @@ def verify_and_fix(args, reader, solution):
             return
 
         print(f"{len(plan)} cell(s) differ, clicking again...")
-        click_plan(capture, reading.geometry, plan, args.click_interval)
+        click_plan(args, capture, reading.geometry, plan)
 
 
 def main(argv=None):
@@ -159,9 +171,12 @@ def main(argv=None):
         return
 
     print(f"Clicking {len(plan)} cell(s)...")
-    click_plan(capture, reading.geometry, plan, args.click_interval)
+    click_plan(args, capture, reading.geometry, plan)
 
-    #--verify_and_fix(args, reader, solution)
+    if args.no_verify:
+        return
+
+    verify_and_fix(args, reader, solution)
 
 
 if __name__ == "__main__":
